@@ -1,0 +1,17 @@
+<?php
+
+// copy this file to config.php and setup your personal config
+
+global $config;
+$config = array(
+    'url' => 'http://localhost:8102/schreckl/service/web/',
+    'db' => array(
+        'database' => 'schreckl',
+        'username' => 'root',
+        'password' => 'Pass123',
+        'host' => 'db',
+    ),
+    'graphs' => array(
+        'rules' => 'http://schreckl.inspirito.de/rules/',
+    )
+);

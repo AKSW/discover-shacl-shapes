@@ -1,0 +1,80 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+    <h1>Schreckl Service</h1>
+
+    <br/>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="bg-success" style="padding:20px; border-radius: 10px; border: 1px;">
+                <strong>Info:</strong>
+                <br/>
+                <br/>
+
+                This service is a proof-of-concept and provides an overview and search function for SHACL rules. Currently, data gathered manually from <a href="https://github.com/schreckl/rules">https://github.com/schreckl/rules</a>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="bg-info" style="padding:20px; border-radius: 10px; border: 1px;">
+                <strong>Repository:</strong>
+                <br/>
+                <br/>
+
+                The code of this service can be found at: <a href="https://github.com/schreckl/service">https://github.com/schreckl/service</a>
+                <br/>
+                <br/>
+            </div>
+        </div>
+    </div>
+
+    <br/>
+    <br/>
+    <hr>
+    <br/>
+
+    <div class="row">
+        <div class="col-lg-3">
+            <h3>Search</h3>
+
+            Put in a string and do a fulltext search for SHACL rules (e.g. "foaf:Person"):
+
+            <br/>
+            <br/>
+            <br/>
+            <form action="{{ url }}" method="get">
+                <input class="form-control" type="text" name="search_query" value="{{ search_query }}">
+                <br/>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+
+            <br/>
+            <br/>
+
+            Can't found rules you are looking for? Please have a look at the <a href="https://github.com/schreckl/rules">current data</a> available.
+        </div>
+        <div class="col-lg-1"></div>
+        <div class="col-lg-8">
+            <h3>Found SHACL info entries</h3>
+
+            <br/>
+
+            {% for key,info in shape_infos %}
+                <br/>
+                <br/>
+                <a href="{{ info['_idUri'] }}"><h4>{{ info['dc11:title'] }}</h4></a>
+
+                <ul>
+                    <li>Source: <a href="{{ info['dc11:source'] }}">{{ info['dc11:source'] }}</a></li>
+                    <li>{{ info.getArrayCopy()['srekl:applies-to']|length }} rules available</li>
+                </ul>
+
+            {% else %}
+                No ShapeInfo entries found.
+            {% endfor %}
+
+        </div>
+    </div>
+
+{% endblock %}

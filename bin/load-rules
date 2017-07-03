@@ -1,0 +1,82 @@
+#!/usr/bin/env php
+<?php
+
+use Knorke\Data\ParserFactory;
+use Knorke\Importer;
+use Saft\Addition\ARC2\Store\ARC2;
+use Saft\Rdf\CommonNamespaces;
+use Saft\Rdf\NodeFactoryImpl;
+use Saft\Rdf\RdfHelpers;
+use Saft\Rdf\StatementFactoryImpl;
+use Saft\Rdf\StatementIteratorFactoryImpl;
+use Saft\Sparql\Query\QueryFactoryImpl;
+use Saft\Sparql\Result\ResultFactoryImpl;
+
+$rootDir = __DIR__ .'/../';
+
+require $rootDir . 'app/config.php';
+require $rootDir . 'vendor/autoload.php';
+
+ini_set('default_charset', 'utf-8');
+
+/*
+ * store related
+ */
+$commonNamespaces = new CommonNamespaces();
+$rdfHelpers = new RdfHelpers();
+$nodeFactory = new NodeFactoryImpl($rdfHelpers);
+$queryFactory = new QueryFactoryImpl($rdfHelpers);
+$resultFactory = new ResultFactoryImpl();
+$statementFactory = new StatementFactoryImpl();
+$statementIteratorFactory = new StatementIteratorFactoryImpl();
+
+$store = new ARC2(
+    $nodeFactory,
+    $statementFactory,
+    $queryFactory,
+    $resultFactory,
+    $statementIteratorFactory,
+    $rdfHelpers,
+    $commonNamespaces,
+    $config['db']
+);
+
+$parserFactory = new ParserFactory(
+    $nodeFactory,
+    $statementFactory,
+    $statementIteratorFactory,
+    $rdfHelpers
+);
+
+$importer = new Importer(
+    $store,
+    $parserFactory,
+    $nodeFactory,
+    $statementFactory,
+    $rdfHelpers,
+    $commonNamespaces
+);
+
+// replace model graph
+echo PHP_EOL . 'Reset graph '. $config['graphs']['rules'];
+$store->emptyAllTables();
+
+
+/*
+ * model data
+ */
+$filesToImport = array(
+    $rootDir .'rules/accessible-building/meta.ttl' => $config['graphs']['rules'],
+    $rootDir .'rules/accessible-building/entrance-fully-accessible-by-wheelchair.ttl' => $config['graphs']['rules'],
+    $rootDir .'rules/accessible-building/entrance-partly-accessible-by-wheelchair.ttl' => $config['graphs']['rules'],
+    $rootDir .'rules/adult-person/adult-person.ttl' => $config['graphs']['rules'],
+);
+
+// import content of all listed files
+foreach ($filesToImport as $filepath => $targetGraph) {
+    echo PHP_EOL . '- read in '. $filepath .' and import to '. $targetGraph;
+    $importer->importFile($filepath, $nodeFactory->createNamedNode($targetGraph), 100);
+}
+
+echo PHP_EOL;
+echo PHP_EOL;

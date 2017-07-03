@@ -1,0 +1,16 @@
+{
+    "require": {
+        "k00ni/knorke": "*",
+        "saft/saft-arc2": "*",
+        "silex/silex": "*",
+        "twig/twig": "*"
+    },
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Schreckl\\": [
+                "src/Schreckl/"
+            ]
+        }
+    }
+}
