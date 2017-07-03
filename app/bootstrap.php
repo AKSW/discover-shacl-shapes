@@ -10,6 +10,7 @@ use Saft\Rdf\StatementIteratorFactoryImpl;
 use Saft\Sparql\Query\QueryFactoryImpl;
 use Saft\Sparql\Result\ResultFactoryImpl;
 use Schreckl\Service\TwigExtension\AssetExtension;
+use Schreckl\Service\TwigExtension\UrlExtension;
 use Silex\Application;
 use Silex\Provider\TwigServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,6 +22,7 @@ $app['debug'] = true;
  * store related
  */
 $commonNamespaces = new CommonNamespaces();
+$commonNamespaces->add('building', 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/building/ontology.ttl#');
 $commonNamespaces->add('sh', 'http://www.w3.org/ns/shacl#');
 $commonNamespaces->add('srekl', 'https://raw.githubusercontent.com/schreckl/rules/master/schreckl.ttl#');
 
@@ -57,9 +59,10 @@ $dataBlankHelper = new DataBlankHelper(
  * init twig template engine
  */
 $app->register(new TwigServiceProvider(), array('twig.path' => __DIR__ .'/views'));
-$app['twig'] = $app->extend('twig', function ($twig, $app) use ($config) {
+$app['twig'] = $app->extend('twig', function ($twig, $app) use ($config, $commonNamespaces) {
     // add extensions
     $twig->addExtension(new AssetExtension($config['url'], 'assets/'));
+    $twig->addExtension(new UrlExtension($commonNamespaces));
 
     return $twig;
 });

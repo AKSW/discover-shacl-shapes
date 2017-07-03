@@ -17,7 +17,7 @@
             </div>
         </div>
         <div class="col-lg-6">
-            <div class="bg-info" style="padding:20px; border-radius: 10px; border: 1px;">
+            <div class="bg-success" style="padding:20px; border-radius: 10px; border: 1px;">
                 <strong>Repository:</strong>
                 <br/>
                 <br/>
@@ -59,15 +59,26 @@
             <h3>Found SHACL info entries</h3>
 
             <br/>
-
+            {% set i = 0 %}
             {% for key,info in shape_infos %}
+                {% set i = i + 1 %}
                 <br/>
                 <br/>
-                <a href="{{ info['_idUri'] }}"><h4>{{ info['dc11:title'] }}</h4></a>
+                <h4># {{i}} - <a href="{{ info['_idUri'] }}">{{ info['dc11:title'] }}</h4></a>
+
+                <div class="bg-info" style="padding:20px; border-radius: 10px; border: 1px; width: 50%;">
+                    {{ info['dc11:description'] }}
+                </div>
+
+                <br/>
 
                 <ul>
+                    <li>Target classes:
+                        <a href="{{ extend(info['sh:targetClass']['_idUri']) }}">
+                            <strong>{{ shorten(info['sh:targetClass']['_idUri']) }}</strong></a>
+                    </li>
                     <li>Source: <a href="{{ info['dc11:source'] }}">{{ info['dc11:source'] }}</a></li>
-                    <li>{{ info.getArrayCopy()['srekl:applies-to']|length }} rules available</li>
+                    <li><strong>{{ info.getArrayCopy()['srekl:applies-to']|length }}</strong> rules available</li>
                 </ul>
 
             {% else %}
