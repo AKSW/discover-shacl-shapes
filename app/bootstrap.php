@@ -78,7 +78,7 @@ $app->get('/', function() use ($app, $store, $config, $dataBlankHelper, $request
     $searchQuery = $request->query->get('search_query');
     $shapeInfos = $dataBlankHelper->find('srekl:ShapeInfo');
 
-    if (null !== $searchQuery) {
+    if (null !== $searchQuery && 1 < strlen($searchQuery)) {
         foreach ($shapeInfos as $key => $shapeInfo) {
             $found = false;
 
