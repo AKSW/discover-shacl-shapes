@@ -1,17 +1,6 @@
 #!/usr/bin/env php
 <?php
 
-use Knorke\Data\ParserFactory;
-use Knorke\Importer;
-use Saft\Addition\ARC2\Store\ARC2;
-use Saft\Rdf\CommonNamespaces;
-use Saft\Rdf\NodeFactoryImpl;
-use Saft\Rdf\RdfHelpers;
-use Saft\Rdf\StatementFactoryImpl;
-use Saft\Rdf\StatementIteratorFactoryImpl;
-use Saft\Sparql\Query\QueryFactoryImpl;
-use Saft\Sparql\Result\ResultFactoryImpl;
-
 $rootDir = __DIR__ .'/../';
 
 require $rootDir . 'app/config.php';
@@ -20,62 +9,35 @@ require $rootDir . 'vendor/autoload.php';
 ini_set('default_charset', 'utf-8');
 
 /*
- * store related
+ * download ZIP from Github repo
  */
-$commonNamespaces = new CommonNamespaces();
-$rdfHelpers = new RdfHelpers();
-$nodeFactory = new NodeFactoryImpl($rdfHelpers);
-$queryFactory = new QueryFactoryImpl($rdfHelpers);
-$resultFactory = new ResultFactoryImpl();
-$statementFactory = new StatementFactoryImpl();
-$statementIteratorFactory = new StatementIteratorFactoryImpl();
+$masterZip = 'https://github.com/schreckl/rules/archive/master.zip';
+$rulesZipPath = sys_get_temp_dir() . '/shacl-rules.zip';
+$rulesUnzippedPath = sys_get_temp_dir() . '/shacl-rules/';
+@unlink($rulesZipPath);
+file_put_contents($rulesZipPath, fopen($masterZip, 'r'));
 
-$store = new ARC2(
-    $nodeFactory,
-    $statementFactory,
-    $queryFactory,
-    $resultFactory,
-    $statementIteratorFactory,
-    $rdfHelpers,
-    $commonNamespaces,
-    $config['db']
-);
+if (file_exists($rulesZipPath)) {
+    echo PHP_EOL . 'File '. $masterZip .' downloaded to '. $rulesZipPath;
+    echo PHP_EOL;
 
-$parserFactory = new ParserFactory(
-    $nodeFactory,
-    $statementFactory,
-    $statementIteratorFactory,
-    $rdfHelpers
-);
+    /*
+     * unzip downloaded ZIP file
+     */
+    unzipFile($rulesZipPath, $rulesUnzippedPath);
 
-$importer = new Importer(
-    $store,
-    $parserFactory,
-    $nodeFactory,
-    $statementFactory,
-    $rdfHelpers,
-    $commonNamespaces
-);
+    /*
+     * read all .ttl files into the store
+     */
+    $rulesFolder = $rulesUnzippedPath . 'rules-master/rules';
 
-// replace model graph
-echo PHP_EOL . 'Reset graph '. $config['graphs']['rules'];
-$store->emptyAllTables();
-
-
-/*
- * model data
- */
-$filesToImport = array(
-    $rootDir .'rules/accessible-building/meta.ttl' => $config['graphs']['rules'],
-    $rootDir .'rules/accessible-building/entrance-fully-accessible-by-wheelchair.ttl' => $config['graphs']['rules'],
-    $rootDir .'rules/accessible-building/entrance-partly-accessible-by-wheelchair.ttl' => $config['graphs']['rules'],
-    $rootDir .'rules/adult-person/adult-person.ttl' => $config['graphs']['rules'],
-);
-
-// import content of all listed files
-foreach ($filesToImport as $filepath => $targetGraph) {
-    echo PHP_EOL . '- read in '. $filepath .' and import to '. $targetGraph;
-    $importer->importFile($filepath, $nodeFactory->createNamedNode($targetGraph), 100);
+    /*
+     * model data
+     */
+    $filesToImport = getFilesOfType($rulesFolder, '.ttl');
+    importFiles($filesToImport, $config['db'], $config['graphs']['rules']);
+} else {
+    echo PHP_EOL . 'Download of '. $rulesZipPath .' failed.';
 }
 
 echo PHP_EOL;

@@ -11,6 +11,7 @@
             "Schreckl\\": [
                 "src/Schreckl/"
             ]
-        }
+        },
+        "files": ["src/utils.php"]
     }
 }
