@@ -102,16 +102,25 @@ $app->get('/', function() use ($app, $store, $config, $dataBlankHelper, $request
 
     if (null !== $searchQuery && 1 < strlen($searchQuery)) {
         foreach ($shapeInfos as $key => $shapeInfo) {
+            $found = false;
 
-            if (false !== strpos($shapeInfo['dc11:title'], $searchQuery)) {
+            if (false !== strpos(strtolower($shapeInfo['dc11:title']), strtolower($searchQuery))) {
                 $found = true;
-            } elseif (false !== strpos($shapeInfo['dc11:description'], $searchQuery)) {
+            } elseif (false !== strpos(strtolower($shapeInfo['dc11:description']), strtolower($searchQuery))) {
                 $found = true;
-            } elseif (false !== strpos($shapeInfo['sh:targetClass']['_idUri'], $searchQuery)) {
+            } elseif (false !== strpos(strtolower($shapeInfo['dc11:creator']), strtolower($searchQuery))) {
                 $found = true;
             }
 
-            if (false == $found) {
+            if (false == $found
+                || (isset($shapeInfo['srekl:active']) && 'true' !== $shapeInfo['srekl:active'])) {
+                unset($shapeInfos[$key]);
+            }
+        }
+    // if srekl:active is set, but false (only for thirdparty entries)
+    } else {
+        foreach ($shapeInfos as $key => $shapeInfo) {
+            if (isset($shapeInfo['srekl:active']) && 'true' !== $shapeInfo['srekl:active']) {
                 unset($shapeInfos[$key]);
             }
         }
