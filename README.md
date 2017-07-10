@@ -1,4 +1,4 @@
-# Schreckl Service
+# Discovery service for SHACL shapes
 
 Example implementation of a discovery service for SHACL shapes/shape groups. It is written in PHP and based on [Silex](https://silex.sensiolabs.org/) and [Twig](https://twig.sensiolabs.org/). The RDF part is implemented using [Saft](https://github.com/SaftIng/Saft).
 
