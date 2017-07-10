@@ -2,41 +2,14 @@
 
 {% block body %}
 
-    <h1>Schreckl Service</h1>
+    <h2>Find and register SHACL shapes</h2>
 
     <br/>
-
-    <div class="row">
-        <div class="col-lg-6">
-            <div class="bg-success" style="padding:20px; border-radius: 10px; border: 1px;">
-                <strong>Info:</strong>
-                <br/>
-                <br/>
-
-                This service is a proof-of-concept and provides an overview and search function for SHACL rules. Currently, data gathered manually from <a href="https://github.com/schreckl/rules">https://github.com/schreckl/rules</a>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="bg-success" style="padding:20px; border-radius: 10px; border: 1px;">
-                <strong>Repository:</strong>
-                <br/>
-                <br/>
-
-                The code of this service can be found at: <a href="https://github.com/schreckl/service">https://github.com/schreckl/service</a>
-                <br/>
-                <br/>
-            </div>
-        </div>
-    </div>
-
-    <br/>
-    <br/>
-    <hr>
     <br/>
 
     <div class="row">
         <div class="col-lg-3">
-            <h3>Search</h3>
+            <h4>Search</h4>
 
             Put in a string and do a fulltext search for SHACL rules (e.g. "foaf:Person"):
 
@@ -52,33 +25,43 @@
             <br/>
             <br/>
 
-            Can't find the rules you are looking for? Please have a look at the <a href="https://github.com/schreckl/rules">current data</a> available.
+            Can't find the shapes you are looking for? Please have a look at the <a href="https://github.com/schreckl/rules">current data</a> available.
+
+            <br/>
+            <br/>
+            Or register new shapes <a href="{{url}}register-shapes">here</a>.
         </div>
         <div class="col-lg-1"></div>
         <div class="col-lg-8">
-            <h3>Found SHACL info entries</h3>
+            <h4>Found SHACL info entries</h4>
 
-            <br/>
             {% set i = 0 %}
             {% for key,info in shape_infos %}
                 {% set i = i + 1 %}
                 <br/>
                 <br/>
-                <h4># {{i}} - <a href="{{ info['_idUri'] }}">{{ info['dc11:title'] }}</h4></a>
+                <h3># {{i}} - <a href="{{ info['_idUri'] }}">{{ info['dc11:title'] }}</h3></a>
 
                 <div class="bg-info" style="padding:20px; border-radius: 10px; border: 1px; width: 50%;">
                     {{ info['dc11:description'] }}
                 </div>
 
                 <br/>
+                <strong>Creator:</strong> {{ info['dc11:creator'] }}
 
+                <br/>
+                <br/>
+
+                <strong>Referenced SHACL files:</strong>
                 <ul>
-                    <li>Target classes:
-                        <a href="{{ extend(info['sh:targetClass']['_idUri']) }}">
-                            <strong>{{ shorten(info['sh:targetClass']['_idUri']) }}</strong></a>
-                    </li>
-                    <li>Source: <a href="{{ info['dc11:source'] }}">{{ info['dc11:source'] }}</a></li>
-                    <li><strong>{{ info.getArrayCopy()['srekl:applies-to']|length }}</strong> rules available</li>
+                    {% for file in info['srekl:shacl-file'] %}
+                        {% if file['_idUri'] is defined %}
+                            {% set file_url = file['_idUri'] %}
+                        {% else %}
+                            {% set file_url = file %}
+                        {% endif %}
+                        <li><a href="{{ file_url }}">{{ file_url }}</a></li>
+                    {% endfor %}
                 </ul>
 
             {% else %}

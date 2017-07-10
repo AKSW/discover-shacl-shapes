@@ -35,7 +35,7 @@ if (file_exists($rulesZipPath)) {
      * model data
      */
     $filesToImport = getFilesOfType($rulesFolder, '.ttl');
-    importFiles($filesToImport, $config['db'], $config['graphs']['rules']);
+    importFiles($filesToImport, $config['db'], $config['graphs']['shapes']);
 } else {
     echo PHP_EOL . 'Download of '. $rulesZipPath .' failed.';
 }

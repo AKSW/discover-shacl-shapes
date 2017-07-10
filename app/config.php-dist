@@ -12,6 +12,7 @@ $config = array(
         'host' => 'db',
     ),
     'graphs' => array(
-        'rules' => 'http://schreckl.inspirito.de/rules/',
+        'shapes' => 'http://schreckl.inspirito.de/shapes/',
+        'shapes_by_thirdparty' => 'http://schreckl.inspirito.de/shapes/by-thirdparty/',
     )
 );

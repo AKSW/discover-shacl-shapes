@@ -1,9 +1,10 @@
 {
     "require": {
+        "gregwar/captcha": "1.*",
         "k00ni/knorke": "*",
         "saft/saft-arc2": "*",
-        "silex/silex": "*",
-        "twig/twig": "*"
+        "silex/silex": "2.*",
+        "twig/twig": "2.*"
     },
     "prefer-stable": true,
     "autoload": {

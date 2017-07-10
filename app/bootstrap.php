@@ -1,6 +1,9 @@
 <?php
 
+use Gregwar\Captcha\CaptchaBuilder;
 use Knorke\DataBlankHelper;
+use Knorke\Importer;
+use Knorke\Data\ParserFactory;
 use Saft\Addition\ARC2\Store\ARC2;
 use Saft\Rdf\CommonNamespaces;
 use Saft\Rdf\NodeFactoryImpl;
@@ -9,10 +12,12 @@ use Saft\Rdf\StatementFactoryImpl;
 use Saft\Rdf\StatementIteratorFactoryImpl;
 use Saft\Sparql\Query\QueryFactoryImpl;
 use Saft\Sparql\Result\ResultFactoryImpl;
+use Schreckl\Service\ShapeHelper;
 use Schreckl\Service\TwigExtension\AssetExtension;
 use Schreckl\Service\TwigExtension\UrlExtension;
 use Silex\Application;
 use Silex\Provider\TwigServiceProvider;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 $app = new Application();
@@ -51,8 +56,25 @@ $dataBlankHelper = new DataBlankHelper(
     $rdfHelpers,
     $store,
     array(
-        $nodeFactory->createNamedNode($config['graphs']['rules'])
+        $nodeFactory->createNamedNode($config['graphs']['shapes']),
+        $nodeFactory->createNamedNode($config['graphs']['shapes_by_thirdparty']),
     )
+);
+
+$parserFactory = new ParserFactory(
+    $nodeFactory,
+    $statementFactory,
+    $statementIteratorFactory,
+    $rdfHelpers
+);
+
+$importer = new Importer(
+    $store,
+    $parserFactory,
+    $nodeFactory,
+    $statementFactory,
+    $rdfHelpers,
+    $commonNamespaces
 );
 
 /*
@@ -80,7 +102,6 @@ $app->get('/', function() use ($app, $store, $config, $dataBlankHelper, $request
 
     if (null !== $searchQuery && 1 < strlen($searchQuery)) {
         foreach ($shapeInfos as $key => $shapeInfo) {
-            $found = false;
 
             if (false !== strpos($shapeInfo['dc11:title'], $searchQuery)) {
                 $found = true;
@@ -102,5 +123,55 @@ $app->get('/', function() use ($app, $store, $config, $dataBlankHelper, $request
         'url' => $config['url']
     ));
 });
+
+// about
+$app->get('/about', function() use ($app, $config) {
+    return $app['twig']->render('about.html.twig', array(
+        'url' => $config['url']
+    ));
+});
+
+// add additional shapes
+$app->match('/register-shapes', function() use ($app, $config, $rdfHelpers, $importer, $nodeFactory, $request) {
+
+    $error = '';
+    $created = false;
+    session_start();
+
+    // check captcha
+    if ('insert' == $request->request->get('action')) {
+        if ($_SESSION['captcha'] == $request->request->get('captcha_by_user')
+            && '' == $request->request->get('captcha')) { // honeypot has to be empty
+            try {
+                $shapeHelper = new ShapeHelper($rdfHelpers, $nodeFactory, $importer);
+                $shapeHelper->add(
+                    $config['graphs']['shapes_by_thirdparty'],
+                    $request->request->all()
+                );
+
+                // to avoid multiple calls
+                $_SESSION['captcha'] = null;
+                $created = true;
+            } catch(Exception $e) {
+                $error = $e->getMessage();
+            }
+        } else {
+            $error = 'Captcha is wrong.';
+        }
+    }
+
+    return $app['twig']->render('register-shapes.html.twig', array(
+        'captcha_img' => $config['url'] . 'captcha.php',
+        'created' => $created,
+        'data' => 0 < count($request->request->all()) ? $request->request->all() : array(
+            'dc11:title' => '',
+            'dc11:description' => '',
+            'dc11:creator' => '',
+            'srekl:shacl-file' => '',
+        ),
+        'error' => $error,
+        'url' => $config['url']
+    ));
+})->method('GET|POST');
 
 return $app;

@@ -97,8 +97,9 @@ function importFiles(array $filesToImport, array $dbCredentials, string $targetG
         $commonNamespaces
     );
 
-    // clean store
-    $store->emptyAllTables();
+    // clean target graph
+    $store->dropGraph($nodeFactory->createNamedNode($targetGraph));
+    $store->createGraph($nodeFactory->createNamedNode($targetGraph));
 
     echo PHP_EOL . 'Start importing:';
 
