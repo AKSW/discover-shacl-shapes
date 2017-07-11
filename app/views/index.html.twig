@@ -40,7 +40,7 @@
                 {% set i = i + 1 %}
                 <br/>
                 <br/>
-                <h3># {{i}} - <a href="{{ info['_idUri'] }}">{{ info['dc11:title'] }}</h3></a>
+                <h3># {{i}} - {{ info['dc11:title'] }}</h3>
 
                 <div class="bg-info" style="padding:20px; border-radius: 10px; border: 1px; width: 50%;">
                     {{ info['dc11:description'] }}

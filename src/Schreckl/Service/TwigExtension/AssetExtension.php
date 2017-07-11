@@ -22,7 +22,7 @@ class AssetExtension extends \Twig_Extension
      */
     public function getAssetPath($file)
     {
-        return $this->url .'/'. $this->assetsPath . $file;
+        return $this->url . $this->assetsPath . $file;
     }
 
     public function getFunctions()

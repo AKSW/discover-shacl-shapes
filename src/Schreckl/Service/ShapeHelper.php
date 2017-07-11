@@ -47,19 +47,11 @@ class ShapeHelper
             }
         }
 
-        // check creator (which is a mail)
-        if ('' !== $data['dc11:creator']) {
-            if (filter_var($data['dc11:creator'], FILTER_VALIDATE_EMAIL)) {
-                // creator is a valid mail
-                $data['dc11:creator'] = '"'. $data['dc11:creator'] .'"';
-
-            } elseif (filter_var($data['dc11:creator'], FILTER_VALIDATE_URL)) {
-                // creator is a valid url
-                $data['dc11:creator'] = '<'. $data['dc11:creator'] .'>';
-
-            } else {
-                throw new \Exception('Creator field value has to be an email address or URL. Or leave it empty.');
-            }
+        // check creator
+        if ('' !== $data['dc11:creator'] && $this->rdfHelpers->simpleCheckUri($data['dc11:creator'])) {
+            $data['dc11:creator'] = '<'. $data['dc11:creator'] .'>';
+        } else {
+            throw new \Exception('Creator field value has to be an email address or URL. Or leave it empty.');
         }
 
         /*
