@@ -11,6 +11,7 @@ $config = array(
         'password' => 'Pass123',
         'host' => 'db',
     ),
+    'admin_key' => '',
     'graphs' => array(
         'shapes' => 'http://schreckl.inspirito.de/shapes/',
         'shapes_by_thirdparty' => 'http://schreckl.inspirito.de/shapes/by-thirdparty/',

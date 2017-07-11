@@ -140,6 +140,61 @@ $app->get('/about', function() use ($app, $config) {
     ));
 });
 
+// admin
+$app->match('/admin', function() use ($app, $config, $request, $dataBlankHelper, $store, $nodeFactory, $statementFactory) {
+    session_start();
+
+    if ($config['admin_key'] == $request->request->get('admin_key')
+        || (isset($_SESSION['admin_key']) && $config['admin_key'] == $_SESSION['admin_key'])) {
+        // store admin key
+        $_SESSION['admin_key'] = $request->request->get('admin_key');
+
+        if ($request->query->get('approve')) {
+            $shapeInfoUriToApprove = $request->query->get('approve');
+
+            // remove old triples with active information
+            $store->deleteMatchingStatements(
+                $statementFactory->createStatement(
+                    $nodeFactory->createNamedNode($shapeInfoUriToApprove),
+                    $nodeFactory->createNamedNode(
+                        'https://raw.githubusercontent.com/schreckl/rules/master/schreckl.ttl#active'
+                    ),
+                    $nodeFactory->createAnyPattern()
+                )
+            );
+
+            // add new triple with true
+            $store->addStatements(array(
+                $statementFactory->createStatement(
+                    $nodeFactory->createNamedNode($shapeInfoUriToApprove),
+                    $nodeFactory->createNamedNode(
+                        'https://raw.githubusercontent.com/schreckl/rules/master/schreckl.ttl#active'
+                    ),
+                    $nodeFactory->createLiteral('true')
+                )
+            ));
+        }
+
+        $res = $dataBlankHelper->find('srekl:ShapeInfo');
+        $shapeInfos = array();
+        foreach ($res as $key => $shapeInfo) {
+            if (isset($shapeInfo['srekl:active']) && 'false' == $shapeInfo['srekl:active']) {
+                $shapeInfos[] = $shapeInfo;
+            }
+        }
+
+        return $app['twig']->render('admin.html.twig', array(
+            'shape_infos' => $shapeInfos,
+            'url' => $config['url']
+        ));
+
+    } else {
+        return $app['twig']->render('admin-login.html.twig', array(
+            'url' => $config['url']
+        ));
+    }
+})->method('GET|POST');
+
 // add additional shapes
 $app->match('/register-shapes', function() use ($app, $config, $rdfHelpers, $importer, $nodeFactory, $request) {
 

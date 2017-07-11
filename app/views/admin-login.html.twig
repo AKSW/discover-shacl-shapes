@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+    <h2>Admin</h2>
+
+    <form action="{{ url }}admin" method="post" style="width: 20%;">
+        <strong>Admin Key:</strong>
+        <input class="form-control" type="password" name="admin_key" value="">
+        <br/>
+        <button class="btn btn-primary" type="submit" name="button">Login</button>
+    </form>
+
+{% endblock %}
