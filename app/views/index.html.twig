@@ -2,70 +2,91 @@
 
 {% block body %}
 
-    <h2>Find and register SHACL shapes</h2>
+    <nobr>
+        <h3><img src="{{ asset('images/subgraph_dots2.svg') }}" style="width: 30px;">
+            &nbsp;
+            SHACL Discovery Service</h3>
+    </nobr>
 
-    <br/>
+    <hr>
     <br/>
 
     <div class="row">
         <div class="col-lg-3">
-            <h4>Search</h4>
+            <h4>Search SHACL shapes:</h4>
 
-            Put in a string and do a fulltext search for SHACL rules (e.g. "foaf:Person"):
-
-            <br/>
-            <br/>
-            <br/>
             <form action="{{ url }}" method="get">
-                <input class="form-control" type="text" name="search_query" value="{{ search_query }}">
+                <input class="form-control" type="text" name="search_query" value="{{ search_query }}" placeholder="e.g. Building">
                 <br/>
-                <button type="submit" class="btn btn-primary">Search</button>
+                <button type="submit" class="btn btn-success">Search</button>
             </form>
 
             <br/>
             <br/>
 
-            Can't find the shapes you are looking for? Please have a look at the <a href="https://github.com/AKSW/shacl-shapes">current data</a> available.
+            <h4><i>Mini FAQ</i></h4>
+
+            <br/>
+            <strong>1. Where is your data come from?</strong> <br/>
+            We include all Github repositories with topic <a href="https://github.com/search?utf8=✓&q=topic%3Ashacl-shapes&type=Repositories">shacl-shapes</a> and
+            if they contain at least one RDF file with one instance of <kbd>sh:NodeShapes</kbd>.
+            <a href="https://github.com/blog/2309-introducing-topics">Here</a> you can find out more about topics.
 
             <br/>
             <br/>
-            Or register new shapes <a href="{{url}}register-shapes">here</a>.
+            <br/>
+            <strong>2. How can i add my own shapes/repository?</strong> <br/>
+            Just create a repository at Github and add shacl-shapes as topic. The Github <a href="https://help.github.com/articles/about-topics/">documentation</a> helps you with that.
+
+            <br/>
+            <br/>
+            <br/>
+            <strong>3. Do you care about the SHACL shapes itself?</strong> <br/>
+            No. We only check if there is at least one instance of <kbd>sh:NodeShapes</kbd> available. In that case, the repository will be added.
+
+            <br/>
+            <br/>
+            <br/>
+            <strong>4. Is this service open source?</strong> <br/>
+            Yes. You can find the code at <a href="https://github.com/AKSW/discover-shacl-shapes">Github</a>. Feel free to host your own instance.
+
+            <br/>
+            <br/>
+            <br/>
+            <strong>5. Who is responsible for this?</strong> <br/>
+            This installation runs on the private webspace of <a href="http://aksw.org/KonradAbicht">Konrad Abicht</a>. <em>(German law demands this)</em>
+
+
         </div>
         <div class="col-lg-1"></div>
         <div class="col-lg-8">
-            <h4>Found SHACL info entries</h4>
+
+            <br/>
+
+            {% if 0 < repositories|length %}
+                <h4>The following repositories contain SHACL shapes</h4>
+            {% endif %}
 
             {% set i = 0 %}
-            {% for key,info in shape_infos %}
+            {% for key,info in repositories %}
                 {% set i = i + 1 %}
                 <br/>
                 <br/>
-                <h3># {{i}} - {{ info['dc11:title'] }}</h3>
+                <h3># {{i}} - {{ info['name'] }}</h3>
+
+                <br/>
+
+                <strong>Repository URL:</strong> <a href="{{ info['repository_url'] }}">{{ info['repository_url'] }}</a>
+
+                <br/>
+                <br/>
 
                 <div class="bg-info" style="padding:20px; border-radius: 10px; border: 1px; width: 50%;">
-                    {{ info['dc11:description'] }}
+                    {{ info['description'] }}
                 </div>
 
-                <br/>
-                <strong>Creator:</strong> <a href="{{ info['dc11:creator'] }}">{{ info['dc11:creator'] }}</a>
-
-                <br/>
-                <br/>
-
-                <strong>Referenced SHACL files:</strong>
-                <ul>
-                    {% for file in info['srekl:shacl-file'] %}
-                        {% if file['_idUri'] is defined %}
-                            {% set file_url = file['_idUri'] %}
-                        {% else %}
-                            {% set file_url = file %}
-                        {% endif %}
-                        <li><a href="{{ file_url }}">{{ file_url }}</a></li>
-                    {% endfor %}
-                </ul>
-
             {% else %}
-                No ShapeInfo entries found.
+                <h4>No matching repositories with SHACL shapes found.</h4>
             {% endfor %}
 
         </div>

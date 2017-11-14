@@ -1,18 +1,16 @@
 {
     "require": {
-        "gregwar/captcha": "1.*",
-        "k00ni/knorke": "*",
-        "saft/saft-arc2": "*",
+        "k00ni/knorke": "dev-master",
         "silex/silex": "2.*",
         "twig/twig": "2.*"
     },
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "Schreckl\\": [
-                "src/Schreckl/"
+            "AKSW\\": [
+                "src/AKSW/"
             ]
-        },
-        "files": ["src/utils.php"]
-    }
+        }
+    },
+    "minimum-stability": "dev"
 }

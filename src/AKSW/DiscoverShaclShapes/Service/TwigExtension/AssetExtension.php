@@ -1,6 +1,6 @@
 <?php
 
-namespace Schreckl\Service\TwigExtension;
+namespace AKSW\DiscoverShaclShapes\Service\TwigExtension;
 
 class AssetExtension extends \Twig_Extension
 {

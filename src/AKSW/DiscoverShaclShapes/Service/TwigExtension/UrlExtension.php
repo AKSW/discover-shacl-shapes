@@ -1,6 +1,6 @@
 <?php
 
-namespace Schreckl\Service\TwigExtension;
+namespace AKSW\DiscoverShaclShapes\Service\TwigExtension;
 
 use Saft\Rdf\CommonNamespaces;
 

@@ -1,20 +1,8 @@
 <?php
 
-use Gregwar\Captcha\CaptchaBuilder;
-use Knorke\DataBlankHelper;
-use Knorke\Importer;
-use Knorke\Data\ParserFactory;
-use Saft\Addition\ARC2\Store\ARC2;
+use AKSW\DiscoverShaclShapes\Service\TwigExtension\AssetExtension;
+use AKSW\DiscoverShaclShapes\Service\TwigExtension\UrlExtension;
 use Saft\Rdf\CommonNamespaces;
-use Saft\Rdf\NodeFactoryImpl;
-use Saft\Rdf\RdfHelpers;
-use Saft\Rdf\StatementFactoryImpl;
-use Saft\Rdf\StatementIteratorFactoryImpl;
-use Saft\Sparql\Query\QueryFactoryImpl;
-use Saft\Sparql\Result\ResultFactoryImpl;
-use Schreckl\Service\ShapeHelper;
-use Schreckl\Service\TwigExtension\AssetExtension;
-use Schreckl\Service\TwigExtension\UrlExtension;
 use Silex\Application;
 use Silex\Provider\TwigServiceProvider;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -23,59 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 $app = new Application();
 $app['debug'] = true;
 
-/*
- * store related
- */
 $commonNamespaces = new CommonNamespaces();
-$commonNamespaces->add('building', 'https://github.com/AKSW/leds-asp-f-ontologies/raw/master/ontologies/building/ontology.ttl#');
-$commonNamespaces->add('sh', 'http://www.w3.org/ns/shacl#');
-$commonNamespaces->add('srekl', 'https://raw.githubusercontent.com/schreckl/rules/master/schreckl.ttl#');
-
-$rdfHelpers = new RdfHelpers();
-$nodeFactory = new NodeFactoryImpl($rdfHelpers);
-$queryFactory = new QueryFactoryImpl($rdfHelpers);
-$resultFactory = new ResultFactoryImpl();
-$statementFactory = new StatementFactoryImpl();
-$statementIteratorFactory = new StatementIteratorFactoryImpl();
-
-$store = new ARC2(
-    $nodeFactory,
-    $statementFactory,
-    $queryFactory,
-    $resultFactory,
-    $statementIteratorFactory,
-    $rdfHelpers,
-    $commonNamespaces,
-    $config['db']
-);
-
-$dataBlankHelper = new DataBlankHelper(
-    $commonNamespaces,
-    $statementFactory,
-    $nodeFactory,
-    $rdfHelpers,
-    $store,
-    array(
-        $nodeFactory->createNamedNode($config['graphs']['shapes']),
-        $nodeFactory->createNamedNode($config['graphs']['shapes_by_thirdparty']),
-    )
-);
-
-$parserFactory = new ParserFactory(
-    $nodeFactory,
-    $statementFactory,
-    $statementIteratorFactory,
-    $rdfHelpers
-);
-
-$importer = new Importer(
-    $store,
-    $parserFactory,
-    $nodeFactory,
-    $statementFactory,
-    $rdfHelpers,
-    $commonNamespaces
-);
 
 /*
  * init twig template engine
@@ -97,38 +33,35 @@ $request = Request::createFromGlobals();
 
 // startpage
 $app->get('/', function() use ($app, $store, $config, $dataBlankHelper, $request) {
-    $searchQuery = $request->query->get('search_query');
-    $shapeInfos = $dataBlankHelper->find('srekl:ShapeInfo');
+    // cut of first 50 signs of the query and ignore the rest
+    $searchQuery = substr($request->query->get('search_query'), 0, 50);
 
-    if (null !== $searchQuery && 1 < strlen($searchQuery)) {
-        foreach ($shapeInfos as $key => $shapeInfo) {
-            $found = false;
+    if (!empty($searchQuery)) {
+        $repos = json_decode(file_get_contents(__DIR__ .'/../web/repositories.json'), true);
+        $reposToDisplay = array();
 
-            if (false !== strpos(strtolower($shapeInfo['dc11:title']), strtolower($searchQuery))) {
-                $found = true;
-            } elseif (false !== strpos(strtolower($shapeInfo['dc11:description']), strtolower($searchQuery))) {
-                $found = true;
-            } elseif (false !== strpos(strtolower($shapeInfo['dc11:creator']), strtolower($searchQuery))) {
-                $found = true;
+        foreach ($repos as $key => $repo) {
+            if (false !== strpos($repo['name'], $searchQuery)) {
+                $reposToDisplay[] = $repo;
+            } elseif (false !== strpos($repo['description'], $searchQuery)) {
+                $reposToDisplay[] = $repo;
             }
 
-            if (false == $found
-                || (isset($shapeInfo['srekl:active']) && 'true' !== $shapeInfo['srekl:active'])) {
-                unset($shapeInfos[$key]);
+            // check target class URIS of found shapes
+            foreach ($repo['target_classes'] as $class) {
+                if (false !== strpos(strtolower($class), strtolower($searchQuery))) {
+                    $reposToDisplay[] = $repo;
+                    break;
+                }
             }
         }
-    // if srekl:active is set, but false (only for thirdparty entries)
     } else {
-        foreach ($shapeInfos as $key => $shapeInfo) {
-            if (isset($shapeInfo['srekl:active']) && 'true' !== $shapeInfo['srekl:active']) {
-                unset($shapeInfos[$key]);
-            }
-        }
+        $reposToDisplay = json_decode(file_get_contents(__DIR__ .'/../web/repositories.json'), true);
     }
 
     return $app['twig']->render('index.html.twig', array(
         'search_query' => $searchQuery,
-        'shape_infos' => $shapeInfos,
+        'repositories' => $reposToDisplay,
         'url' => $config['url']
     ));
 });
@@ -139,103 +72,5 @@ $app->get('/about', function() use ($app, $config) {
         'url' => $config['url']
     ));
 });
-
-// admin
-$app->match('/admin', function() use ($app, $config, $request, $dataBlankHelper, $store, $nodeFactory, $statementFactory) {
-    session_start();
-
-    if ($config['admin_key'] == $request->request->get('admin_key')
-        || (isset($_SESSION['admin_key']) && $config['admin_key'] == $_SESSION['admin_key'])) {
-        // store admin key
-        $_SESSION['admin_key'] = $request->request->get('admin_key');
-
-        if ($request->query->get('approve')) {
-            $shapeInfoUriToApprove = $request->query->get('approve');
-
-            // remove old triples with active information
-            $store->deleteMatchingStatements(
-                $statementFactory->createStatement(
-                    $nodeFactory->createNamedNode($shapeInfoUriToApprove),
-                    $nodeFactory->createNamedNode(
-                        'https://raw.githubusercontent.com/schreckl/rules/master/schreckl.ttl#active'
-                    ),
-                    $nodeFactory->createAnyPattern()
-                )
-            );
-
-            // add new triple with true
-            $store->addStatements(array(
-                $statementFactory->createStatement(
-                    $nodeFactory->createNamedNode($shapeInfoUriToApprove),
-                    $nodeFactory->createNamedNode(
-                        'https://raw.githubusercontent.com/schreckl/rules/master/schreckl.ttl#active'
-                    ),
-                    $nodeFactory->createLiteral('true')
-                )
-            ));
-        }
-
-        $res = $dataBlankHelper->find('srekl:ShapeInfo');
-        $shapeInfos = array();
-        foreach ($res as $key => $shapeInfo) {
-            if (isset($shapeInfo['srekl:active']) && 'false' == $shapeInfo['srekl:active']) {
-                $shapeInfos[] = $shapeInfo;
-            }
-        }
-
-        return $app['twig']->render('admin.html.twig', array(
-            'shape_infos' => $shapeInfos,
-            'url' => $config['url']
-        ));
-
-    } else {
-        return $app['twig']->render('admin-login.html.twig', array(
-            'url' => $config['url']
-        ));
-    }
-})->method('GET|POST');
-
-// add additional shapes
-$app->match('/register-shapes', function() use ($app, $config, $rdfHelpers, $importer, $nodeFactory, $request) {
-
-    $error = '';
-    $created = false;
-    session_start();
-
-    // check captcha
-    if ('insert' == $request->request->get('action')) {
-        if ($_SESSION['captcha'] == $request->request->get('captcha_by_user')
-            && '' == $request->request->get('captcha')) { // honeypot has to be empty
-            try {
-                $shapeHelper = new ShapeHelper($rdfHelpers, $nodeFactory, $importer);
-                $shapeHelper->add(
-                    $config['graphs']['shapes_by_thirdparty'],
-                    $request->request->all()
-                );
-
-                // to avoid multiple calls
-                $_SESSION['captcha'] = null;
-                $created = true;
-            } catch(Exception $e) {
-                $error = $e->getMessage();
-            }
-        } else {
-            $error = 'Captcha is wrong.';
-        }
-    }
-
-    return $app['twig']->render('register-shapes.html.twig', array(
-        'captcha_img' => $config['url'] . 'captcha.php',
-        'created' => $created,
-        'data' => 0 < count($request->request->all()) ? $request->request->all() : array(
-            'dc11:title' => '',
-            'dc11:description' => '',
-            'dc11:creator' => '',
-            'srekl:shacl-file' => '',
-        ),
-        'error' => $error,
-        'url' => $config['url']
-    ));
-})->method('GET|POST');
 
 return $app;
