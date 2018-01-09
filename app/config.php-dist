@@ -1,8 +1,0 @@
-<?php
-
-// copy this file to config.php and setup your personal config
-
-global $config;
-$config = array(
-    'url' => 'http://localhost:8102/schreckl/service/web/',
-);

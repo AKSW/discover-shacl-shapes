@@ -19,12 +19,13 @@ echo ""
 echo "#################################"
 echo "Clone/update repositories locally"
 echo "#################################"
+mkdir docker-data
+
 php src/AKSW/DiscoverShaclShapes/Retrieval/CloneGithubRepositories.php
 
-# set file permission to 0777 so that cloned repositories can be removed outside of the container
-chmod -R 0777 ./docker-data
+# set file permission to 0777, so that cloned repositories can be removed outside of the container
+chmod -R 0777 docker-data
 
-#
 echo ""
 echo ""
 echo "###################################"

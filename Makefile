@@ -1,5 +1,5 @@
 default:
-	./bin/execute-retrieval-docker.sh
+	./bin/execute-docker.sh
 
 build:
-	docker build . -t schreckl
+	docker build . -t shsrv
